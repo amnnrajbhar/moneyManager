@@ -6,7 +6,8 @@ export interface Transaction {
   _id?: string;
   amount: number;
   category: string;
-  type: 'income' | 'expense';
+  type: 'income' | 'expense' | 'Borrowed';
+  person?: string;
   date: string;
   note?: string;
 }

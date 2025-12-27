@@ -8,6 +8,7 @@ import { AuthService } from '../services/auth.service';
 import { TransactionService, Transaction } from '../services/transaction.service';
 import { ExpensesModalComponent } from './expenses-modal.component';
 import { IncomeModalComponent } from './income-modal.component';
+import { BorrowingModalComponent } from './borrowing-modal.component';
 
 Chart.register(...registerables);
 
@@ -169,6 +170,13 @@ Chart.register(...registerables);
                 </svg>
                 <span class="hidden sm:inline">Advanced</span>
               </button>
+              <button
+                (click)="openBorrowingModal()"
+                class="px-3 sm:px-4 py-2 bg-gradient-to-r from-orange-600 to-red-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:shadow-lg transition-all duration-200 flex items-center space-x-1 sm:space-x-2"
+              >
+                <i class="fas fa-handshake text-xs sm:text-sm"></i>
+                <span>Borrowing</span>
+              </button>
             </div>
           </div>
           <!-- Chart Container - Responsive Height -->
@@ -247,6 +255,7 @@ export class DashboardComponent implements OnInit {
   transactions: Transaction[] = [];
   totalIncome = 0;
   totalExpense = 0;
+  totalBorrowed = 0;
   balance = 0;
   totalBalance = 0;
   portfolioValue = 0;
@@ -325,6 +334,10 @@ export class DashboardComponent implements OnInit {
       .filter(t => t.type === 'expense')
       .reduce((sum, t) => sum + t.amount, 0);
 
+    this.totalBorrowed = this.transactions
+      .filter(t => t.type === 'Borrowed')
+      .reduce((sum, t) => sum + t.amount, 0);
+
     // Load portfolio value
     this.loadPortfolioValue();
 
@@ -369,6 +382,18 @@ export class DashboardComponent implements OnInit {
       data: { incomes: incomeTransactions },
       width: '95%',
       maxWidth: '600px',
+      maxHeight: '85vh',
+      panelClass: 'custom-dialog-container',
+      position: { top: '50px' }
+    });
+  }
+
+  openBorrowingModal(): void {
+    const borrowingTransactions = this.transactions.filter(t => t.type === 'Borrowed');
+    this.dialog.open(BorrowingModalComponent, {
+      data: { borrowings: borrowingTransactions },
+      width: '95%',
+      maxWidth: '800px',
       maxHeight: '85vh',
       panelClass: 'custom-dialog-container',
       position: { top: '50px' }

@@ -380,7 +380,9 @@ export class AdvancedChartComponent implements OnInit {
       if (!acc[month]) {
         acc[month] = { income: 0, expense: 0 };
       }
-      acc[month][t.type] += t.amount;
+      if (t.type === 'income' || t.type === 'expense') {
+        acc[month][t.type] += t.amount;
+      }
       return acc;
     }, {} as Record<string, { income: number; expense: number }>);
 

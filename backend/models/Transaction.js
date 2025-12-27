@@ -19,6 +19,13 @@ const transactionSchema = new mongoose.Schema({
     enum: ['income', 'expense', 'Borrowed'],
     required: true
   },
+  person: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Person',
+    required: function() {
+      return this.type === 'Borrowed';
+    }
+  },
   date: {
     type: Date,
     required: true
