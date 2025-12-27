@@ -168,7 +168,7 @@ Chart.register(...registerables);
                 <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                 </svg>
-                <span class="hidden sm:inline">Advanced</span>
+                <span>Chart</span>
               </button>
               <button
                 (click)="openBorrowingModal()"
@@ -208,8 +208,8 @@ Chart.register(...registerables);
             <div *ngFor="let transaction of transactions" class="px-4 sm:px-6 py-3 sm:py-4 hover:bg-gray-50/50 transition-colors duration-200">
               <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-3 sm:space-x-4 flex-1 min-w-0">
-                  <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0" [class]="transaction.type === 'income' ? 'bg-green-100' : 'bg-red-100'">
-                    <i class="fas text-xs sm:text-sm" [class]="transaction.type === 'income' ? 'fa-plus text-green-600' : 'fa-minus text-red-600'"></i>
+                  <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0" [class]="(transaction.type === 'income' || (transaction.type === 'Borrowed' && transaction.category === 'Lent Money')) ? 'bg-green-100' : 'bg-red-100'">
+                    <i class="fas text-xs sm:text-sm" [class]="(transaction.type === 'income' || (transaction.type === 'Borrowed' && transaction.category === 'Lent Money')) ? 'fa-plus text-green-600' : (transaction.type === 'Borrowed' ? 'fa-handshake text-red-600' : 'fa-minus text-red-600')"></i>
                   </div>
                   <div class="flex-1 min-w-0">
                     <h4 class="text-xs sm:text-sm font-semibold text-gray-900 truncate">{{ transaction.category }}</h4>
@@ -218,8 +218,8 @@ Chart.register(...registerables);
                   </div>
                 </div>
                 <div class="text-right flex-shrink-0 ml-3">
-                  <div class="text-xs sm:text-sm font-bold" [class]="transaction.type === 'income' ? 'text-green-600' : 'text-red-600'">
-                    {{ transaction.type === 'income' ? '+' : '-' }}<i class="fas fa-indian-rupee-sign mr-1"></i>{{ formatIndianCurrency(transaction.amount) }}
+                  <div class="text-xs sm:text-sm font-bold" [class]="(transaction.type === 'income' || (transaction.type === 'Borrowed' && transaction.category === 'Lent Money')) ? 'text-green-600' : 'text-red-600'">
+                    {{ (transaction.type === 'income' || (transaction.type === 'Borrowed' && transaction.category === 'Lent Money')) ? '+' : '-' }}<i class="fas fa-indian-rupee-sign mr-1"></i>{{ formatIndianCurrency(transaction.amount) }}
                   </div>
                   <button
                     (click)="deleteTransaction(transaction._id!)"
@@ -327,11 +327,11 @@ export class DashboardComponent implements OnInit {
 
   calculateTotals(): void {
     this.totalIncome = this.transactions
-      .filter(t => t.type === 'income')
+      .filter(t => t.type === 'income' || (t.type === 'Borrowed' && t.category === 'Lent Money'))
       .reduce((sum, t) => sum + t.amount, 0);
 
     this.totalExpense = this.transactions
-      .filter(t => t.type === 'expense')
+      .filter(t => t.type === 'expense' || (t.type === 'Borrowed' && t.category === 'Borrowed Money'))
       .reduce((sum, t) => sum + t.amount, 0);
 
     this.totalBorrowed = this.transactions
@@ -365,7 +365,7 @@ export class DashboardComponent implements OnInit {
   }
 
   openExpensesModal(): void {
-    const expenseTransactions = this.transactions.filter(t => t.type === 'expense');
+    const expenseTransactions = this.transactions.filter(t => t.type === 'expense' || (t.type === 'Borrowed' && t.category === 'Borrowed Money'));
     this.dialog.open(ExpensesModalComponent, {
       data: { expenses: expenseTransactions },
       width: '95%',
@@ -377,7 +377,7 @@ export class DashboardComponent implements OnInit {
   }
 
   openIncomeModal(): void {
-    const incomeTransactions = this.transactions.filter(t => t.type === 'income');
+    const incomeTransactions = this.transactions.filter(t => t.type === 'income' || (t.type === 'Borrowed' && t.category === 'Lent Money'));
     this.dialog.open(IncomeModalComponent, {
       data: { incomes: incomeTransactions },
       width: '95%',

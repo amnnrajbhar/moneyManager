@@ -328,6 +328,11 @@ export class AddTransactionComponent {
         amount: parseFloat(this.transactionForm.value.amount)
       };
 
+      // Remove person field if not a borrowing transaction or if empty
+      if (transaction.type !== 'Borrowed' || !transaction.person) {
+        delete transaction.person;
+      }
+
       this.transactionService.addTransaction(transaction).subscribe({
         next: () => {
           this.router.navigate(['/dashboard']);

@@ -36,7 +36,8 @@ import { Transaction } from '../services/transaction.service';
                  class="flex items-center justify-between p-3 sm:p-4 bg-gray-50 rounded-lg sm:rounded-xl hover:bg-gray-100 transition-colors duration-200">
               <div class="flex items-center space-x-3 sm:space-x-4 flex-1 min-w-0">
                 <div class="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-red-400 to-red-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <mat-icon class="text-white text-xs sm:text-sm">remove</mat-icon>
+                  <mat-icon *ngIf="expense.type !== 'Borrowed'" class="text-white text-xs sm:text-sm">remove</mat-icon>
+                  <mat-icon *ngIf="expense.type === 'Borrowed'" class="text-white text-xs sm:text-sm">handshake</mat-icon>
                 </div>
                 <div class="flex-1 min-w-0">
                   <h4 class="font-semibold text-sm sm:text-base text-gray-900 truncate">{{ expense.category }}</h4>
