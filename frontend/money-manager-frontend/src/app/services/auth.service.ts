@@ -17,7 +17,9 @@ export interface AuthResponse {
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = 'http://localhost:5000/api/auth';
+  // private apiUrl = 'http://localhost:5000/api/auth';
+  private apiUrl = 'https://moneymanager-d72u.onrender.com/api/auth';
+  
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
 
