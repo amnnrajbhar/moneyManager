@@ -3,15 +3,134 @@
 @tailwind components;
 @tailwind utilities;
 
-html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+/* Material Design Typography */
+.mat-h1, .mat-headline-5, .mat-typography .mat-h1, .mat-typography .mat-headline-5, .mat-typography h1 {
+  font: 400 18px / 18px Roboto, sans-serif;
+}
 
+html, body { 
+  height: 100%; 
+  overflow-x: hidden;
+}
+
+body { 
+  margin: 0; 
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom dialog styles */
 .custom-dialog-container .mat-mdc-dialog-container {
   padding: 0 !important;
   border-radius: 16px !important;
   overflow: hidden !important;
+  max-width: 95vw !important;
+  max-height: 90vh !important;
+}
+
+/* Responsive dialog adjustments */
+@media (max-width: 640px) {
+  .custom-dialog-container .mat-mdc-dialog-container {
+    margin: 8px !important;
+    border-radius: 12px !important;
+  }
 }
 
 .mat-mdc-paginator {
   background: transparent !important;
+}
+
+/* Responsive animations */
+@keyframes slideIn {
+  0% {
+    width: 0;
+    opacity: 0;
+  }
+  50% {
+    width: auto;
+    opacity: 1;
+  }
+  100% {
+    width: 0;
+    opacity: 0;
+  }
+}
+
+@keyframes showIcon {
+  0% {
+    opacity: 0;
+    width: 0;
+  }
+  70% {
+    opacity: 0;
+    width: 0;
+  }
+  100% {
+    opacity: 1;
+    width: auto;
+  }
+}
+
+/* Responsive scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Mobile-first responsive utilities */
+@media (max-width: 640px) {
+  .text-responsive {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+  
+  .padding-responsive {
+    padding: 0.75rem;
+  }
+  
+  .margin-responsive {
+    margin: 0.5rem;
+  }
+}
+
+@media (min-width: 641px) {
+  .text-responsive {
+    font-size: 1rem;
+    line-height: 1.5rem;
+  }
+  
+  .padding-responsive {
+    padding: 1rem;
+  }
+  
+  .margin-responsive {
+    margin: 1rem;
+  }
+}
+
+/* Focus styles for accessibility */
+.focus\:ring-2:focus {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+
+/* Smooth transitions for all interactive elements */
+* {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
 }

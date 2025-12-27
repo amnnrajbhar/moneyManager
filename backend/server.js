@@ -5,6 +5,7 @@ require('dotenv').config();
 
 const authRoutes = require('./routes/auth');
 const transactionRoutes = require('./routes/transactions');
+const peopleRoutes = require('./routes/people');
 
 const app = express();
 
@@ -20,6 +21,7 @@ app.get('/', (req, res) => {
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/transactions', transactionRoutes);
+app.use('/api/people', peopleRoutes);
 
 // Error handling
 app.use((err, req, res, next) => {

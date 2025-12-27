@@ -13,13 +13,18 @@ import { AuthService } from '../services/auth.service';
       <div class="max-w-md w-full">
         <!-- Logo and Header -->
         <div class="text-center mb-8">
-          <div class="mx-auto w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
-            <span class="text-white font-bold text-2xl">₹</span>
+          <div class="flex items-center justify-center space-x-3 mb-4">
+            <div class="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+              <i class="fas fa-indian-rupee-sign text-white text-lg"></i>
+            </div>
           </div>
-          <h2 class="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          <h1 class="text-sm font-medium bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+            Money Manager
+          </h1>
+          <h2 class="text-xl font-semibold text-gray-800 mb-2">
             Welcome Back
           </h2>
-          <p class="mt-2 text-gray-600">Sign in to manage your finances</p>
+          <p class="text-gray-600">Sign in to manage your finances</p>
         </div>
 
         <!-- Login Form -->
