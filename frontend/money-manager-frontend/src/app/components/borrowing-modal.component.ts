@@ -1,19 +1,30 @@
 import { Component, Inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { PeopleService, Person } from '../services/people.service';
 
 @Component({
   selector: 'app-borrowing-modal',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   template: `
     <div class="p-4 sm:p-6">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-lg font-semibold text-gray-900">Borrowing Overview</h2>
-        <button (click)="close()" class="text-gray-400 hover:text-gray-600">
-          <i class="fas fa-times"></i>
-        </button>
+        <div class="flex items-center space-x-3">
+          <button 
+            (click)="shareDetails()"
+            [disabled]="!hasSelectedPeople()"
+            class="px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors duration-200"
+            title="Share Details"
+          >
+            <i class="fas fa-share mr-2"></i>Share Details
+          </button>
+          <button (click)="close()" class="text-gray-400 hover:text-gray-600 p-2">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
       </div>
 
       <div class="space-y-4">
@@ -22,9 +33,17 @@ import { PeopleService, Person } from '../services/people.service';
             class="flex items-center justify-between mb-3 cursor-pointer hover:bg-gray-100 p-2 rounded"
             (click)="togglePersonTransactions(person)"
           >
-            <div>
-              <h3 class="font-medium text-gray-900">{{ person.name }}</h3>
-              <p class="text-sm text-gray-500">{{ person.relation }}</p>
+            <div class="flex items-center space-x-3">
+              <input 
+                type="checkbox" 
+                [(ngModel)]="person.selected"
+                (click)="$event.stopPropagation()"
+                class="w-5 h-5 text-blue-600 bg-white border-2 border-gray-300 rounded-full focus:ring-blue-500 focus:ring-2 checked:bg-blue-600 checked:border-blue-600 transition-all duration-200"
+              >
+              <div>
+                <h3 class="font-medium text-gray-900">{{ person.name }}</h3>
+                <p class="text-sm text-gray-500">{{ person.relation }}</p>
+              </div>
             </div>
             <div class="flex items-center space-x-3">
               <div class="text-right">
@@ -127,7 +146,8 @@ export class BorrowingModalComponent {
         mobile: person.mobile || '',
         totalAmount: totalAmount,
         transactions: personTransactions,
-        expanded: false
+        expanded: false,
+        selected: false
       };
     });
   }
@@ -152,6 +172,55 @@ export class BorrowingModalComponent {
       const message = `Hi ${person.name}, this is a friendly reminder about the money you borrowed. Please return when convenient. Thanks!`;
       const whatsappUrl = `https://wa.me/${person.mobile}?text=${encodeURIComponent(message)}`;
       window.open(whatsappUrl, '_blank');
+    }
+  }
+
+  hasSelectedPeople(): boolean {
+    return this.borrowingData.some(person => person.selected);
+  }
+
+  sendReminderToSelected(): void {
+    const selectedPeople = this.borrowingData.filter(person => person.selected && person.mobile);
+    selectedPeople.forEach(person => {
+      this.sendReminder(person);
+    });
+  }
+
+  shareDetails(): void {
+    const selectedPeople = this.borrowingData.filter(person => person.selected);
+    if (selectedPeople.length === 0) return;
+
+    let detailsText = '💰 Borrowing Details:\n\n';
+    
+    selectedPeople.forEach(person => {
+      detailsText += `👤 ${person.name} (${person.relation})\n`;
+      detailsText += `💵 Total Amount: ₹${this.formatCurrency(person.totalAmount)}\n`;
+      
+      if (person.transactions.length > 0) {
+        detailsText += '📋 Transactions:\n';
+        person.transactions.forEach((transaction: any) => {
+          const status = transaction.returned ? '✅ Returned' : '❌ Pending';
+          let transactionLine = `  • ${transaction.category}: ₹${this.formatCurrency(transaction.amount)} (${new Date(transaction.date).toLocaleDateString()}) ${status}`;
+          if (transaction.note) {
+            transactionLine += ` - Note: ${transaction.note}`;
+          }
+          detailsText += transactionLine + '\n';
+        });
+      }
+      detailsText += '\n';
+    });
+
+    detailsText += '📱 Generated from Money Manager App';
+
+    if (navigator.share) {
+      navigator.share({
+        title: 'Borrowing Details',
+        text: detailsText
+      });
+    } else {
+      navigator.clipboard.writeText(detailsText).then(() => {
+        alert('Details copied to clipboard!');
+      });
     }
   }
 
