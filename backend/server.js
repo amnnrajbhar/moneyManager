@@ -7,6 +7,7 @@ const authRoutes = require('./routes/auth');
 const transactionRoutes = require('./routes/transactions');
 const peopleRoutes = require('./routes/people');
 const portfolioRoutes = require('./routes/portfolio');
+const userBalanceRoutes = require('./routes/userBalance');
 
 const app = express();
 
@@ -24,6 +25,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/people', peopleRoutes);
 app.use('/api/portfolio', portfolioRoutes);
+app.use('/api/user-balance', userBalanceRoutes);
 
 // Error handling
 app.use((err, req, res, next) => {

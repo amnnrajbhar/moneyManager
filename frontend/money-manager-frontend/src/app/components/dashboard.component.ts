@@ -7,6 +7,7 @@ import { Chart, ChartData, ChartConfiguration, registerables } from 'chart.js';
 import { AuthService } from '../services/auth.service';
 import { TransactionService, Transaction } from '../services/transaction.service';
 import { PortfolioService } from '../services/portfolio.service';
+import { UserBalanceService } from '../services/user-balance.service';
 import { ExpensesModalComponent } from './expenses-modal.component';
 import { IncomeModalComponent } from './income-modal.component';
 import { BorrowingModalComponent } from './borrowing-modal.component';
@@ -88,7 +89,9 @@ Chart.register(...registerables);
             </div>
             <div class="text-center sm:text-right">
               <p class="text-xs sm:text-sm opacity-90 mb-1">Available</p>
-              <p class="text-xl sm:text-2xl font-bold" [class]="totalBalance >= 0 ? 'text-green-200' : 'text-red-200'">
+              <p class="text-xl sm:text-2xl font-bold cursor-pointer hover:bg-white/20 rounded px-2 py-1 transition-all" 
+                 [class]="totalBalance >= 0 ? 'text-green-200' : 'text-red-200'"
+                 (click)="editAvailableAmount()">
                 <i class="fas fa-indian-rupee-sign mr-1 sm:mr-2"></i>{{ formatIndianCurrency(totalBalance >= 0 ? totalBalance : 0) }}
               </p>
             </div>
@@ -202,30 +205,6 @@ Chart.register(...registerables);
           
           <!-- Transaction List - Responsive -->
           <div class="divide-y divide-gray-200/50 max-h-80 sm:max-h-96 overflow-y-auto">
-            <!-- Portfolio Items -->
-            <div *ngFor="let item of portfolioItems" class="px-4 sm:px-6 py-3 sm:py-4 hover:bg-gray-50/50 transition-colors duration-200">
-              <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-3 sm:space-x-4 flex-1 min-w-0">
-                  <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 bg-blue-100">
-                    <i class="fas fa-chart-pie text-xs sm:text-sm text-blue-600"></i>
-                  </div>
-                  <div class="flex-1 min-w-0">
-                    <h4 class="text-xs sm:text-sm font-semibold text-gray-900 truncate">{{ item.name }}</h4>
-                    <p class="text-xs text-gray-500">{{ item.type | titlecase }} • {{ item.quantity }} units</p>
-                    <p class="text-xs text-gray-500">{{ item.date | date:'MMM dd, yyyy' }}</p>
-                  </div>
-                </div>
-                <div class="text-right flex-shrink-0 ml-3">
-                  <div class="text-xs sm:text-sm font-bold text-blue-600">
-                    <i class="fas fa-indian-rupee-sign mr-1"></i>{{ formatIndianCurrency(item.currentPrice * item.quantity) }}
-                  </div>
-                  <div class="text-xs text-gray-500">
-                    Portfolio
-                  </div>
-                </div>
-              </div>
-            </div>
-            <!-- Regular Transactions -->
             <div *ngFor="let transaction of transactions" class="px-4 sm:px-6 py-3 sm:py-4 hover:bg-gray-50/50 transition-colors duration-200">
               <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-3 sm:space-x-4 flex-1 min-w-0">
@@ -254,7 +233,7 @@ Chart.register(...registerables);
           </div>
           
           <!-- Empty State - Responsive -->
-          <div *ngIf="transactions.length === 0 && portfolioItems.length === 0" class="px-4 sm:px-6 py-8 sm:py-12 text-center">
+          <div *ngIf="transactions.length === 0" class="px-4 sm:px-6 py-8 sm:py-12 text-center">
             <div class="w-12 h-12 sm:w-16 sm:h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
               <i class="fas fa-receipt text-gray-400 text-lg sm:text-2xl"></i>
             </div>
@@ -274,13 +253,13 @@ Chart.register(...registerables);
 })
 export class DashboardComponent implements OnInit {
   transactions: Transaction[] = [];
-  portfolioItems: any[] = [];
   totalIncome = 0;
   totalExpense = 0;
   totalBorrowed = 0;
   balance = 0;
   totalBalance = 0;
   portfolioValue = 0;
+
   remainingBalance = 0;
   Math = Math;
 
@@ -319,13 +298,36 @@ export class DashboardComponent implements OnInit {
     private authService: AuthService,
     private transactionService: TransactionService,
     private portfolioService: PortfolioService,
+    private userBalanceService: UserBalanceService,
     private router: Router,
     private dialog: MatDialog
   ) { }
 
+  editAvailableAmount(): void {
+    const newAmount = prompt('Enter available amount:', this.totalBalance.toString());
+    if (newAmount !== null && !isNaN(Number(newAmount))) {
+      this.totalBalance = Number(newAmount);
+      this.userBalanceService.updateUserBalance(this.totalBalance).subscribe({
+        next: () => console.log('Balance updated'),
+        error: (err) => console.error('Error updating balance:', err)
+      });
+    }
+  }
+
+  loadCustomBalance(): void {
+    this.userBalanceService.getUserBalance().subscribe({
+      next: (data) => {
+        if (data.customBalance > 0) {
+          this.totalBalance = data.customBalance;
+        }
+      },
+      error: (err) => console.error('Error loading custom balance:', err)
+    });
+  }
+
   ngOnInit(): void {
+    this.loadCustomBalance();
     this.loadTransactions();
-    this.loadPortfolioItems();
   }
 
   loadTransactions(): void {
@@ -415,15 +417,6 @@ export class DashboardComponent implements OnInit {
 
   formatIndianCurrency(amount: number): string {
     return new Intl.NumberFormat('en-IN').format(amount);
-  }
-
-  loadPortfolioItems(): void {
-    this.portfolioService.getPortfolioItems().subscribe({
-      next: (items) => {
-        this.portfolioItems = items;
-      },
-      error: (err) => console.error('Error loading portfolio items:', err)
-    });
   }
 
   loadPortfolioValue(): void {
