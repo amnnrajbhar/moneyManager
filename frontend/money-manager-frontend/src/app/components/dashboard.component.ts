@@ -6,6 +6,7 @@ import { BaseChartDirective } from 'ng2-charts';
 import { Chart, ChartData, ChartConfiguration, registerables } from 'chart.js';
 import { AuthService } from '../services/auth.service';
 import { TransactionService, Transaction } from '../services/transaction.service';
+import { PortfolioService } from '../services/portfolio.service';
 import { ExpensesModalComponent } from './expenses-modal.component';
 import { IncomeModalComponent } from './income-modal.component';
 import { BorrowingModalComponent } from './borrowing-modal.component';
@@ -36,10 +37,6 @@ Chart.register(...registerables);
             
             <!-- Action Buttons -->
             <div class="flex items-center space-x-1 sm:space-x-2">
-              <!-- Salary Display - Hidden on mobile -->
-              <div class="hidden md:block text-xs text-gray-600 mr-2">
-                Salary: <i class="fas fa-indian-rupee-sign mr-1"></i>{{ formatIndianCurrency(monthlySalary) }}
-              </div>
               
               <!-- Add Transaction Button -->
               <button
@@ -87,7 +84,7 @@ Chart.register(...registerables);
               <p class="text-2xl sm:text-3xl font-bold">
                 <i class="fas fa-indian-rupee-sign mr-1 sm:mr-2"></i>{{ formatIndianCurrency(totalBalance) }}
               </p>
-              <p class="text-xs sm:text-sm opacity-90 mt-1">Salary + Income + Portfolio - Expenses</p>
+              <p class="text-xs sm:text-sm opacity-90 mt-1">Income + Portfolio - Expenses</p>
             </div>
             <div class="text-center sm:text-right">
               <p class="text-xs sm:text-sm opacity-90 mb-1">Available</p>
@@ -205,6 +202,30 @@ Chart.register(...registerables);
           
           <!-- Transaction List - Responsive -->
           <div class="divide-y divide-gray-200/50 max-h-80 sm:max-h-96 overflow-y-auto">
+            <!-- Portfolio Items -->
+            <div *ngFor="let item of portfolioItems" class="px-4 sm:px-6 py-3 sm:py-4 hover:bg-gray-50/50 transition-colors duration-200">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3 sm:space-x-4 flex-1 min-w-0">
+                  <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 bg-blue-100">
+                    <i class="fas fa-chart-pie text-xs sm:text-sm text-blue-600"></i>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <h4 class="text-xs sm:text-sm font-semibold text-gray-900 truncate">{{ item.name }}</h4>
+                    <p class="text-xs text-gray-500">{{ item.type | titlecase }} • {{ item.quantity }} units</p>
+                    <p class="text-xs text-gray-500">{{ item.date | date:'MMM dd, yyyy' }}</p>
+                  </div>
+                </div>
+                <div class="text-right flex-shrink-0 ml-3">
+                  <div class="text-xs sm:text-sm font-bold text-blue-600">
+                    <i class="fas fa-indian-rupee-sign mr-1"></i>{{ formatIndianCurrency(item.currentPrice * item.quantity) }}
+                  </div>
+                  <div class="text-xs text-gray-500">
+                    Portfolio
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- Regular Transactions -->
             <div *ngFor="let transaction of transactions" class="px-4 sm:px-6 py-3 sm:py-4 hover:bg-gray-50/50 transition-colors duration-200">
               <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-3 sm:space-x-4 flex-1 min-w-0">
@@ -233,7 +254,7 @@ Chart.register(...registerables);
           </div>
           
           <!-- Empty State - Responsive -->
-          <div *ngIf="transactions.length === 0" class="px-4 sm:px-6 py-8 sm:py-12 text-center">
+          <div *ngIf="transactions.length === 0 && portfolioItems.length === 0" class="px-4 sm:px-6 py-8 sm:py-12 text-center">
             <div class="w-12 h-12 sm:w-16 sm:h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
               <i class="fas fa-receipt text-gray-400 text-lg sm:text-2xl"></i>
             </div>
@@ -253,13 +274,13 @@ Chart.register(...registerables);
 })
 export class DashboardComponent implements OnInit {
   transactions: Transaction[] = [];
+  portfolioItems: any[] = [];
   totalIncome = 0;
   totalExpense = 0;
   totalBorrowed = 0;
   balance = 0;
   totalBalance = 0;
   portfolioValue = 0;
-  monthlySalary = 0;
   remainingBalance = 0;
   Math = Math;
 
@@ -297,22 +318,14 @@ export class DashboardComponent implements OnInit {
   constructor(
     private authService: AuthService,
     private transactionService: TransactionService,
+    private portfolioService: PortfolioService,
     private router: Router,
     private dialog: MatDialog
   ) { }
 
   ngOnInit(): void {
-    this.checkSalarySetup();
     this.loadTransactions();
-  }
-
-  checkSalarySetup(): void {
-    const salary = localStorage.getItem('monthlySalary');
-    if (!salary) {
-      this.router.navigate(['/salary-setup']);
-      return;
-    }
-    this.monthlySalary = parseFloat(salary);
+    this.loadPortfolioItems();
   }
 
   loadTransactions(): void {
@@ -341,8 +354,8 @@ export class DashboardComponent implements OnInit {
     // Load portfolio value
     this.loadPortfolioValue();
 
-    // Total balance = initial salary + additional income + portfolio - expenses
-    this.totalBalance = this.monthlySalary + this.totalIncome + this.portfolioValue - this.totalExpense;
+    // Total balance = income + portfolio - expenses
+    this.totalBalance = this.totalIncome + this.portfolioValue - this.totalExpense;
     this.balance = this.totalBalance;
 
     // Update chart data with new object reference
@@ -404,13 +417,34 @@ export class DashboardComponent implements OnInit {
     return new Intl.NumberFormat('en-IN').format(amount);
   }
 
+  loadPortfolioItems(): void {
+    this.portfolioService.getPortfolioItems().subscribe({
+      next: (items) => {
+        this.portfolioItems = items;
+      },
+      error: (err) => console.error('Error loading portfolio items:', err)
+    });
+  }
+
   loadPortfolioValue(): void {
-    const portfolio = localStorage.getItem('portfolio');
-    if (portfolio) {
-      const portfolioItems = JSON.parse(portfolio);
-      this.portfolioValue = portfolioItems.reduce((sum: number, item: any) =>
-        sum + (item.currentPrice * item.quantity), 0);
-    }
+    this.portfolioService.getPortfolioItems().subscribe({
+      next: (portfolioItems) => {
+        this.portfolioValue = portfolioItems.reduce((sum, item) =>
+          sum + (item.currentPrice * item.quantity), 0);
+        // Recalculate total balance after getting portfolio value
+        this.totalBalance = this.totalIncome + this.portfolioValue - this.totalExpense;
+        this.balance = this.totalBalance;
+        // Update chart data
+        this.chartData = {
+          ...this.chartData,
+          datasets: [{
+            ...this.chartData.datasets[0],
+            data: [this.totalIncome, this.totalExpense, Math.abs(this.totalBalance)]
+          }]
+        };
+      },
+      error: (err) => console.error('Error loading portfolio:', err)
+    });
   }
 
   openAddPortfolioModal(): void {

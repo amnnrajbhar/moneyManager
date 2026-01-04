@@ -5,19 +5,9 @@ import { MatDialog } from '@angular/material/dialog';
 import { BaseChartDirective } from 'ng2-charts';
 import { Chart, ChartData, ChartConfiguration, registerables } from 'chart.js';
 import { AddPortfolioModalComponent } from './add-portfolio-modal.component';
+import { PortfolioService, Portfolio } from '../services/portfolio.service';
 
 Chart.register(...registerables);
-
-export interface Portfolio {
-  _id?: string;
-  name: string;
-  type: 'stocks' | 'mutual_funds' | 'bonds' | 'crypto' | 'other';
-  quantity: number;
-  buyPrice: number;
-  currentPrice: number;
-  date: string;
-}
-Math: Math;
 
 @Component({
   selector: 'app-portfolio',
@@ -152,6 +142,12 @@ Math: Math;
                   <div class="text-xs sm:text-sm" [class]="(item.currentPrice * item.quantity - item.buyPrice * item.quantity) >= 0 ? 'text-green-600' : 'text-red-600'">
                     {{ (item.currentPrice * item.quantity - item.buyPrice * item.quantity) >= 0 ? '+' : '' }}{{ formatIndianCurrency(Math.abs(item.currentPrice * item.quantity - item.buyPrice * item.quantity)) }}
                   </div>
+                  <button
+                    (click)="deletePortfolioItem(item._id!)"
+                    class="text-xs text-red-500 hover:text-red-700 mt-1 transition-colors duration-200"
+                  >
+                    Delete
+                  </button>
                 </div>
               </div>
             </div>
@@ -204,7 +200,8 @@ export class PortfolioComponent implements OnInit {
 
   constructor(
     private router: Router,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private portfolioService: PortfolioService
   ) {}
 
   ngOnInit(): void {
@@ -212,12 +209,14 @@ export class PortfolioComponent implements OnInit {
   }
 
   loadPortfolio(): void {
-    const stored = localStorage.getItem('portfolio');
-    if (stored) {
-      this.portfolioItems = JSON.parse(stored);
-      this.calculateTotals();
-      this.updateChart();
-    }
+    this.portfolioService.getPortfolioItems().subscribe({
+      next: (items) => {
+        this.portfolioItems = items;
+        this.calculateTotals();
+        this.updateChart();
+      },
+      error: (err) => console.error('Error loading portfolio:', err)
+    });
   }
 
   calculateTotals(): void {
@@ -260,14 +259,14 @@ export class PortfolioComponent implements OnInit {
   }
 
   addPortfolioItem(item: Portfolio): void {
-    const newItem = {
-      ...item,
-      _id: Date.now().toString()
-    };
-    this.portfolioItems.push(newItem);
-    localStorage.setItem('portfolio', JSON.stringify(this.portfolioItems));
-    this.calculateTotals();
-    this.updateChart();
+    this.portfolioService.addPortfolioItem(item).subscribe({
+      next: (newItem) => {
+        this.portfolioItems.push(newItem);
+        this.calculateTotals();
+        this.updateChart();
+      },
+      error: (err) => console.error('Error adding portfolio item:', err)
+    });
   }
 
   getTypeColor(type: string): string {
@@ -290,6 +289,19 @@ export class PortfolioComponent implements OnInit {
       other: 'fa-coins'
     };
     return icons[type as keyof typeof icons] || 'fa-coins';
+  }
+
+  deletePortfolioItem(id: string): void {
+    if (confirm('Are you sure you want to delete this investment?')) {
+      this.portfolioService.deletePortfolioItem(id).subscribe({
+        next: () => {
+          this.portfolioItems = this.portfolioItems.filter(item => item._id !== id);
+          this.calculateTotals();
+          this.updateChart();
+        },
+        error: (err) => console.error('Error deleting portfolio item:', err)
+      });
+    }
   }
 
   formatIndianCurrency(amount: number): string {

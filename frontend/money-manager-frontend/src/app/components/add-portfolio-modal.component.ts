@@ -2,7 +2,7 @@ import { Component, Inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { Portfolio } from './portfolio.component';
+import { Portfolio } from '../services/portfolio.service';
 
 @Component({
   selector: 'app-add-portfolio-modal',
