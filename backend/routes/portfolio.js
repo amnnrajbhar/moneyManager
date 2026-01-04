@@ -17,14 +17,30 @@ router.get('/', auth, async (req, res) => {
 // Add new portfolio item
 router.post('/', auth, async (req, res) => {
   try {
+    console.log('Request body:', req.body);
+    console.log('User ID:', req.user?.userId);
+    
+    if (!req.user || !req.user.userId) {
+      return res.status(401).json({ message: 'User not authenticated' });
+    }
+    
+    const { name, type, quantity, buyPrice, currentPrice, date } = req.body;
+    
     const portfolioItem = new Portfolio({
-      ...req.body,
-      userId: req.user.userId
+      userId: req.user.userId,
+      name,
+      type,
+      quantity: Number(quantity),
+      buyPrice: Number(buyPrice),
+      currentPrice: Number(currentPrice),
+      date: date ? new Date(date) : new Date()
     });
+    
     await portfolioItem.save();
     res.status(201).json(portfolioItem);
   } catch (error) {
-    res.status(400).json({ message: 'Error creating portfolio item' });
+    console.error('Portfolio creation error:', error);
+    res.status(400).json({ message: 'Error creating portfolio item', error: error.message });
   }
 });
 
