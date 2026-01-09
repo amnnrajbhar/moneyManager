@@ -49,4 +49,21 @@ router.delete('/:id', auth, async (req, res) => {
   }
 });
 
+// Update person
+router.put('/:id', auth, async (req, res) => {
+  try {
+    const person = await Person.findOneAndUpdate(
+      { _id: req.params.id, userId: req.user.id },
+      req.body,
+      { new: true }
+    );
+    if (!person) {
+      return res.status(404).json({ message: 'Person not found' });
+    }
+    res.json(person);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 module.exports = router;

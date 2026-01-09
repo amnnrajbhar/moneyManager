@@ -5,7 +5,6 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { TransactionService } from '../services/transaction.service';
 import { PeopleService, Person } from '../services/people.service';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { ToastService } from '../services/toast.service';
 
 @Component({
@@ -368,7 +367,6 @@ export class AddTransactionComponent {
     private transactionService: TransactionService,
     private peopleService: PeopleService,
     private router: Router,
-    private snackBar: MatSnackBar,
     private toastService: ToastService
   ) {
     this.transactionForm = this.fb.group({
@@ -451,7 +449,7 @@ export class AddTransactionComponent {
 
   updatePerson(): void {
     if (!this.editingPerson.name || !this.editingPerson.relation) {
-      this.snackBar.open('Name and relation are required', 'Close', { duration: 3000 });
+      this.toastService.show('Name and relation are required');
       return;
     }
 
@@ -467,12 +465,12 @@ export class AddTransactionComponent {
         if (personIndex !== -1) {
           this.people[personIndex] = { ...this.people[personIndex], ...personData };
         }
-        this.snackBar.open('Person updated successfully!', 'Close', { duration: 3000 });
+        this.toastService.show('Person updated successfully!');
         this.cancelEdit();
       },
       error: (err) => {
         console.error('Error updating person:', err);
-        this.snackBar.open('Failed to update person', 'Close', { duration: 3000 });
+        this.toastService.show('Failed to update person');
       }
     });
   }
@@ -486,11 +484,11 @@ export class AddTransactionComponent {
           next: () => {
             this.people = this.people.filter(p => p._id !== selectedPersonId);
             this.transactionForm.patchValue({ person: '' });
-            this.snackBar.open('Person deleted successfully!', 'Close', { duration: 3000 });
+            this.toastService.show('Person deleted successfully!');
           },
           error: (err) => {
             console.error('Error deleting person:', err);
-            this.snackBar.open('Failed to delete person', 'Close', { duration: 3000 });
+            this.toastService.show('Failed to delete person');
           }
         });
       }

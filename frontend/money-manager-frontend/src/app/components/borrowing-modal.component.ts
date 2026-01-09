@@ -88,6 +88,7 @@ import { ToastService } from '../services/toast.service';
               <div class="flex-1">
                 <p class="text-sm font-medium">{{ getDisplayCategory(transaction.category) }}</p>
                 <p class="text-xs text-gray-500">{{ transaction.date | date:'MMM dd, yyyy' }}</p>
+                <p *ngIf="transaction.note" class="text-xs text-gray-400 truncate">{{ transaction.note }}</p>
               </div>
               <div class="flex items-center space-x-3">
                 <span class="text-sm font-medium text-orange-600">
@@ -155,13 +156,13 @@ export class BorrowingModalComponent {
 
   processBorrowingData(people: any[]): void {
     const borrowingTransactions = this.data.borrowings || [];
-    
+
     // Only show people with borrowing amount > 0
     this.borrowingData = people
       .map(person => {
         const personTransactions = borrowingTransactions.filter((t: any) => t.person === person._id);
         const totalAmount = personTransactions.reduce((sum: number, t: any) => sum + t.amount, 0);
-        
+
         return {
           name: person.name,
           relation: person.relation,
@@ -209,23 +210,28 @@ export class BorrowingModalComponent {
 
   sendReminder(person: any): void {
     if (person.mobile) {
-      let message = `Hi ${person.name}, this is a friendly reminder about the money you borrowed.\n\n`;
-      message += `💵 Total Amount: ₹${this.formatCurrency(person.totalAmount)}\n\n`;
-      
-      if (person.transactions.length > 0) {
-        message += '📋 Transaction Details:\n';
-        person.transactions.forEach((transaction: any) => {
-          const status = transaction.returned ? '✅ Returned' : '❌ Pending';
-          message += `• ${transaction.category}: ₹${this.formatCurrency(transaction.amount)} (${new Date(transaction.date).toLocaleDateString()}) ${status}\n`;
-        });
-        message += '\n';
-      }
-      
-      message += 'Please return when convenient. Thanks!';
-      
+      let message = `Hi ${person.name},\n\n`;
+      message += `This is a friendly reminder about the borrowed amount.\n\n`;
+      message += `Total Pending: ₹${this.formatCurrency(person.totalAmount)}\n\n`;
+
+      let count = 1;
+      person.transactions.forEach((t: any) => {
+        if (!t.returned) {
+          message += `${count}. Amount: ₹${this.formatCurrency(t.amount)}`;
+          if (t.note) {
+            message += ` (${t.note})`;
+          }
+          message += `\n`;
+          count++;
+        }
+      });
+
+      message += `\nPlease return the pending amount when convenient.\n`;
+      message += `Thank you.`;
+
       const whatsappUrl = `https://wa.me/${person.mobile}?text=${encodeURIComponent(message)}`;
       window.open(whatsappUrl, '_blank');
-    }else{
+    } else {
       this.toastService.show('Mobile number not available. Please update it to send a reminder.');
     }
   }
@@ -246,11 +252,11 @@ export class BorrowingModalComponent {
     if (selectedPeople.length === 0) return;
 
     let detailsText = '💰 Borrowing Details:\n\n';
-    
+
     selectedPeople.forEach(person => {
       detailsText += `👤 ${person.name} (${person.relation})\n`;
       detailsText += `💵 Total Amount: ₹${this.formatCurrency(person.totalAmount)}\n`;
-      
+
       if (person.transactions.length > 0) {
         detailsText += '📋 Transactions:\n';
         person.transactions.forEach((transaction: any) => {
