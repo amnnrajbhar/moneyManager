@@ -5,14 +5,14 @@ import { DashboardComponent } from './components/dashboard.component';
 import { AddTransactionComponent } from './components/add-transaction.component';
 import { AdvancedChartComponent } from './components/advanced-chart.component';
 import { PortfolioComponent } from './components/portfolio.component';
-import { AuthGuard } from './guards/auth.guard';
+import { authGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
   { path: 'login', component: LoginComponent },
   { path: 'register', component: RegisterComponent },
-  { path: 'dashboard', component: DashboardComponent, canActivate: [AuthGuard] },
-  { path: 'add-transaction', component: AddTransactionComponent, canActivate: [AuthGuard] },
-  { path: 'advanced-chart', component: AdvancedChartComponent, canActivate: [AuthGuard] },
-  { path: 'portfolio', component: PortfolioComponent, canActivate: [AuthGuard] }
+  { path: 'dashboard', component: DashboardComponent, canActivate: [authGuard] },
+  { path: 'add-transaction', component: AddTransactionComponent, canActivate: [authGuard] },
+  { path: 'advanced-chart', component: AdvancedChartComponent, canActivate: [authGuard] },
+  { path: 'portfolio', component: PortfolioComponent, canActivate: [authGuard] }
 ];

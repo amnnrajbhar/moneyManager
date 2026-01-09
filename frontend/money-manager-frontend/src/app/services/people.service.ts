@@ -27,6 +27,10 @@ export class PeopleService {
     return this.http.post<Person>(this.apiUrl, person);
   }
 
+  updatePerson(id: string, person: Omit<Person, '_id' | 'userId'>): Observable<Person> {
+    return this.http.put<Person>(`${this.apiUrl}/${id}`, person);
+  }
+
   deletePerson(id: string): Observable<any> {
     return this.http.delete(`${this.apiUrl}/${id}`);
   }

@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { PeopleService, Person } from '../services/people.service';
+import { TransactionService } from '../services/transaction.service';
+import { ToastService } from '../services/toast.service';
 
 @Component({
   selector: 'app-borrowing-modal',
@@ -11,7 +13,12 @@ import { PeopleService, Person } from '../services/people.service';
   template: `
     <div class="p-4 sm:p-6">
       <div class="flex items-center justify-between mb-4">
-        <h2 class="text-lg font-semibold text-gray-900">Borrowing Overview</h2>
+        <div>
+          <h2 class="text-lg font-semibold text-gray-900">Borrowing Overview</h2>
+          <p class="text-sm text-orange-600 font-medium mt-1">
+            <i class="fas fa-indian-rupee-sign mr-1"></i>Total Amt {{ formatCurrency(getTotalAmount()) }}
+          </p>
+        </div>
         <div class="flex items-center space-x-3">
           <button 
             (click)="shareDetails()"
@@ -19,7 +26,8 @@ import { PeopleService, Person } from '../services/people.service';
             class="px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors duration-200"
             title="Share Details"
           >
-            <i class="fas fa-share mr-2"></i>Share Details
+            <i class="fas fa-share" [class.mr-2]="!isMobile()"></i>
+            <span class="hidden sm:inline">Share Details</span>
           </button>
           <button (click)="close()" class="text-gray-400 hover:text-gray-600 p-2">
             <i class="fas fa-times"></i>
@@ -27,10 +35,22 @@ import { PeopleService, Person } from '../services/people.service';
         </div>
       </div>
 
+      <div class="mb-4" *ngIf="borrowingData.length > 0">
+        <label class="flex items-center space-x-2 cursor-pointer">
+          <input 
+            type="checkbox" 
+            [checked]="isAllSelected()"
+            (change)="toggleSelectAll()"
+            class="w-4 h-4 text-blue-600 bg-white border-2 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+          >
+          <span class="text-sm text-gray-700">Select All</span>
+        </label>
+      </div>
+
       <div class="space-y-4">
         <div *ngFor="let person of borrowingData" class="bg-gray-50 rounded-lg p-4">
           <div 
-            class="flex items-center justify-between mb-3 cursor-pointer hover:bg-gray-100 p-2 rounded"
+            class="flex items-center justify-between mb-3 cursor-pointer hover:bg-gray-100 p-2 rounded relative"
             (click)="togglePersonTransactions(person)"
           >
             <div class="flex items-center space-x-3">
@@ -41,8 +61,8 @@ import { PeopleService, Person } from '../services/people.service';
                 class="w-5 h-5 text-blue-600 bg-white border-2 border-gray-300 rounded-full focus:ring-blue-500 focus:ring-2 checked:bg-blue-600 checked:border-blue-600 transition-all duration-200"
               >
               <div>
-                <h3 class="font-medium text-gray-900">{{ person.name }}</h3>
-                <p class="text-sm text-gray-500">{{ person.relation }}</p>
+                <h3 class="font-medium text-gray-900 text-sm sm:text-base">{{ person.name }}</h3>
+                <p class="text-xs sm:text-sm text-gray-500">{{ person.relation }}</p>
               </div>
             </div>
             <div class="flex items-center space-x-3">
@@ -54,12 +74,19 @@ import { PeopleService, Person } from '../services/people.service';
               </div>
               <i class="fas" [class]="person.expanded ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
             </div>
+            <button
+              (click)="sendReminder(person); $event.stopPropagation()"
+              class="absolute top-2 right-2 text-green-600 hover:text-green-800 text-sm flex items-center space-x-1"
+              title="Send WhatsApp Reminder"
+            >
+              <i class="fab fa-whatsapp"></i>
+            </button>
           </div>
 
           <div *ngIf="person.expanded" class="space-y-2 mt-3">
             <div *ngFor="let transaction of person.transactions" class="flex items-center justify-between bg-white rounded p-2">
               <div class="flex-1">
-                <p class="text-sm font-medium">{{ transaction.category }}</p>
+                <p class="text-sm font-medium">{{ getDisplayCategory(transaction.category) }}</p>
                 <p class="text-xs text-gray-500">{{ transaction.date | date:'MMM dd, yyyy' }}</p>
               </div>
               <div class="flex items-center space-x-3">
@@ -85,14 +112,6 @@ import { PeopleService, Person } from '../services/people.service';
                   >
                   <span class="text-xs">No</span>
                 </div>
-                <button 
-                  *ngIf="!transaction.returned && person.mobile"
-                  (click)="sendReminder(person)"
-                  class="text-blue-600 hover:text-blue-800 text-xs"
-                  title="Send Reminder"
-                >
-                  <i class="fas fa-bell"></i>
-                </button>
               </div>
             </div>
             <div *ngIf="person.transactions.length === 0" class="text-center py-4 text-gray-500 text-sm">
@@ -115,7 +134,9 @@ export class BorrowingModalComponent {
   constructor(
     public dialogRef: MatDialogRef<BorrowingModalComponent>,
     @Inject(MAT_DIALOG_DATA) public data: any,
-    private peopleService: PeopleService
+    private peopleService: PeopleService,
+    private transactionService: TransactionService,
+    private toastService: ToastService
   ) {
     this.loadPeopleAndProcessData();
   }
@@ -135,21 +156,23 @@ export class BorrowingModalComponent {
   processBorrowingData(people: any[]): void {
     const borrowingTransactions = this.data.borrowings || [];
     
-    // Always show all people first
-    this.borrowingData = people.map(person => {
-      const personTransactions = borrowingTransactions.filter((t: any) => t.person === person._id);
-      const totalAmount = personTransactions.reduce((sum: number, t: any) => sum + t.amount, 0);
-      
-      return {
-        name: person.name,
-        relation: person.relation,
-        mobile: person.mobile || '',
-        totalAmount: totalAmount,
-        transactions: personTransactions,
-        expanded: false,
-        selected: false
-      };
-    });
+    // Only show people with borrowing amount > 0
+    this.borrowingData = people
+      .map(person => {
+        const personTransactions = borrowingTransactions.filter((t: any) => t.person === person._id);
+        const totalAmount = personTransactions.reduce((sum: number, t: any) => sum + t.amount, 0);
+        
+        return {
+          name: person.name,
+          relation: person.relation,
+          mobile: person.mobile || '',
+          totalAmount: totalAmount,
+          transactions: personTransactions,
+          expanded: false,
+          selected: false
+        };
+      })
+      .filter(person => person.totalAmount > 0);
   }
 
   togglePersonTransactions(person: any): void {
@@ -157,21 +180,53 @@ export class BorrowingModalComponent {
   }
 
   updateReturnStatus(transactionId: string, returned: boolean): void {
-    // Update local data
-    this.borrowingData.forEach(person => {
-      person.transactions.forEach((transaction: any) => {
-        if (transaction._id === transactionId) {
-          transaction.returned = returned;
+    if (returned) {
+      this.transactionService.deleteTransaction(transactionId).subscribe({
+        next: () => {
+          this.borrowingData.forEach(person => {
+            person.transactions = person.transactions.filter((t: any) => t._id !== transactionId);
+            person.totalAmount = person.transactions.reduce((sum: number, t: any) => sum + t.amount, 0);
+          });
+          this.borrowingData = this.borrowingData.filter(person => person.totalAmount > 0);
+          this.toastService.show('Transaction marked as returned and deleted successfully!');
+          this.dialogRef.close('refresh');
+        },
+        error: (err) => {
+          console.error('Error deleting transaction:', err);
+          this.toastService.show('Failed to delete transaction. Please try again.');
         }
       });
-    });
+    } else {
+      this.borrowingData.forEach(person => {
+        person.transactions.forEach((transaction: any) => {
+          if (transaction._id === transactionId) {
+            transaction.returned = returned;
+          }
+        });
+      });
+    }
   }
 
   sendReminder(person: any): void {
     if (person.mobile) {
-      const message = `Hi ${person.name}, this is a friendly reminder about the money you borrowed. Please return when convenient. Thanks!`;
+      let message = `Hi ${person.name}, this is a friendly reminder about the money you borrowed.\n\n`;
+      message += `💵 Total Amount: ₹${this.formatCurrency(person.totalAmount)}\n\n`;
+      
+      if (person.transactions.length > 0) {
+        message += '📋 Transaction Details:\n';
+        person.transactions.forEach((transaction: any) => {
+          const status = transaction.returned ? '✅ Returned' : '❌ Pending';
+          message += `• ${transaction.category}: ₹${this.formatCurrency(transaction.amount)} (${new Date(transaction.date).toLocaleDateString()}) ${status}\n`;
+        });
+        message += '\n';
+      }
+      
+      message += 'Please return when convenient. Thanks!';
+      
       const whatsappUrl = `https://wa.me/${person.mobile}?text=${encodeURIComponent(message)}`;
       window.open(whatsappUrl, '_blank');
+    }else{
+      this.toastService.show('Mobile number not available. Please update it to send a reminder.');
     }
   }
 
@@ -222,6 +277,27 @@ export class BorrowingModalComponent {
         alert('Details copied to clipboard!');
       });
     }
+  }
+
+  getTotalAmount(): number {
+    return this.borrowingData.reduce((total, person) => total + person.totalAmount, 0);
+  }
+
+  isAllSelected(): boolean {
+    return this.borrowingData.length > 0 && this.borrowingData.every(person => person.selected);
+  }
+
+  toggleSelectAll(): void {
+    const selectAll = !this.isAllSelected();
+    this.borrowingData.forEach(person => person.selected = selectAll);
+  }
+
+  getDisplayCategory(category: string): string {
+    return category.replace(' Money', '');
+  }
+
+  isMobile(): boolean {
+    return window.innerWidth < 640; // sm breakpoint
   }
 
   formatCurrency(amount: number): string {

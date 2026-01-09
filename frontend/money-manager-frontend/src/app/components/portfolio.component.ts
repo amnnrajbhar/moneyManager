@@ -6,6 +6,7 @@ import { BaseChartDirective } from 'ng2-charts';
 import { Chart, ChartData, ChartConfiguration, registerables } from 'chart.js';
 import { AddPortfolioModalComponent } from './add-portfolio-modal.component';
 import { PortfolioService, Portfolio } from '../services/portfolio.service';
+import { ToastService } from '../services/toast.service';
 
 Chart.register(...registerables);
 
@@ -201,7 +202,8 @@ export class PortfolioComponent implements OnInit {
   constructor(
     private router: Router,
     private dialog: MatDialog,
-    private portfolioService: PortfolioService
+    private portfolioService: PortfolioService,
+    private toastService: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -264,8 +266,12 @@ export class PortfolioComponent implements OnInit {
         this.portfolioItems.push(newItem);
         this.calculateTotals();
         this.updateChart();
+        this.toastService.show('Investment added successfully!');
       },
-      error: (err) => console.error('Error adding portfolio item:', err)
+      error: (err) => {
+        console.error('Error adding portfolio item:', err);
+        this.toastService.show('Failed to add investment');
+      }
     });
   }
 
@@ -298,8 +304,12 @@ export class PortfolioComponent implements OnInit {
           this.portfolioItems = this.portfolioItems.filter(item => item._id !== id);
           this.calculateTotals();
           this.updateChart();
+          this.toastService.show('Investment deleted successfully!');
         },
-        error: (err) => console.error('Error deleting portfolio item:', err)
+        error: (err) => {
+          console.error('Error deleting portfolio item:', err);
+          this.toastService.show('Failed to delete investment');
+        }
       });
     }
   }

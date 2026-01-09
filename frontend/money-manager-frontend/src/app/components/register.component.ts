@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../services/auth.service';
+import { ToastService } from '../services/toast.service';
 
 @Component({
   selector: 'app-register',
@@ -131,7 +132,8 @@ export class RegisterComponent {
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private toastService: ToastService
   ) {
     this.registerForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
@@ -148,10 +150,12 @@ export class RegisterComponent {
       
       this.authService.register(email, password).subscribe({
         next: () => {
+          this.toastService.show('Account created successfully!');
           this.router.navigate(['/salary-setup']);
         },
         error: (err) => {
           this.error = err.error?.message || 'Registration failed';
+          this.toastService.show('Registration failed');
           this.loading = false;
         }
       });

@@ -4,6 +4,7 @@ import { Router, RouterModule } from '@angular/router';
 import { BaseChartDirective } from 'ng2-charts';
 import { Chart, ChartConfiguration, ChartData, ChartType, registerables } from 'chart.js';
 import { TransactionService, Transaction } from '../services/transaction.service';
+import { ToastService } from '../services/toast.service';
 
 Chart.register(...registerables);
 
@@ -292,7 +293,8 @@ export class AdvancedChartComponent implements OnInit {
 
   constructor(
     private transactionService: TransactionService,
-    private router: Router
+    private router: Router,
+    private toastService: ToastService
   ) {}
 
   ngOnInit(): void {

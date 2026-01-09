@@ -8,6 +8,7 @@ import { AuthService } from '../services/auth.service';
 import { TransactionService, Transaction } from '../services/transaction.service';
 import { PortfolioService } from '../services/portfolio.service';
 import { UserBalanceService } from '../services/user-balance.service';
+import { ToastService } from '../services/toast.service';
 import { ExpensesModalComponent } from './expenses-modal.component';
 import { IncomeModalComponent } from './income-modal.component';
 import { BorrowingModalComponent } from './borrowing-modal.component';
@@ -300,7 +301,8 @@ export class DashboardComponent implements OnInit {
     private portfolioService: PortfolioService,
     private userBalanceService: UserBalanceService,
     private router: Router,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private toastService: ToastService
   ) { }
 
   editAvailableAmount(): void {
@@ -308,8 +310,13 @@ export class DashboardComponent implements OnInit {
     if (newAmount !== null && !isNaN(Number(newAmount))) {
       this.totalBalance = Number(newAmount);
       this.userBalanceService.updateUserBalance(this.totalBalance).subscribe({
-        next: () => console.log('Balance updated'),
-        error: (err) => console.error('Error updating balance:', err)
+        next: () => {
+          this.toastService.show('Balance updated successfully!');
+        },
+        error: (err) => {
+          console.error('Error updating balance:', err);
+          this.toastService.show('Failed to update balance');
+        }
       });
     }
   }
@@ -373,8 +380,14 @@ export class DashboardComponent implements OnInit {
   deleteTransaction(id: string): void {
     if (confirm('Are you sure you want to delete this transaction?')) {
       this.transactionService.deleteTransaction(id).subscribe({
-        next: () => this.loadTransactions(),
-        error: (err) => console.error('Error deleting transaction:', err)
+        next: () => {
+          this.toastService.show('Transaction deleted successfully!');
+          this.loadTransactions();
+        },
+        error: (err) => {
+          console.error('Error deleting transaction:', err);
+          this.toastService.show('Failed to delete transaction');
+        }
       });
     }
   }

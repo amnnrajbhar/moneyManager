@@ -5,6 +5,8 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { TransactionService } from '../services/transaction.service';
 import { PeopleService, Person } from '../services/people.service';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { ToastService } from '../services/toast.service';
 
 @Component({
   selector: 'app-add-transaction',
@@ -141,11 +143,70 @@ import { PeopleService, Person } from '../services/people.service';
                 </select>
                 <button
                   type="button"
+                  (click)="editSelectedPerson()"
+                  [disabled]="!transactionForm.get('person')?.value"
+                  class="px-3 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors duration-200"
+                  title="Edit Person"
+                >
+                  <i class="fas fa-edit text-sm"></i>
+                </button>
+                <button
+                  type="button"
+                  (click)="deleteSelectedPerson()"
+                  [disabled]="!transactionForm.get('person')?.value"
+                  class="px-3 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-400 transition-colors duration-200"
+                  title="Delete Person"
+                >
+                  <i class="fas fa-trash text-sm"></i>
+                </button>
+                <button
+                  type="button"
                   (click)="showAddPersonForm = !showAddPersonForm"
                   class="px-3 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
                 >
                   <i class="fas fa-plus text-sm"></i>
                 </button>
+              </div>
+              
+              <!-- Edit Person Form -->
+              <div *ngIf="showEditPersonForm" class="mt-3 p-3 bg-blue-50 rounded-lg">
+                <h4 class="text-sm font-semibold mb-3">Edit Person</h4>
+                <div class="space-y-3">
+                  <input
+                    [(ngModel)]="editingPerson.name"
+                    [ngModelOptions]="{standalone: true}"
+                    placeholder="Name"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  />
+                  <input
+                    [(ngModel)]="editingPerson.relation"
+                    [ngModelOptions]="{standalone: true}"
+                    placeholder="Relation"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  />
+                  <input
+                    [(ngModel)]="editingPerson.mobile"
+                    [ngModelOptions]="{standalone: true}"
+                    placeholder="Mobile (Optional)"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  />
+                  <div class="flex space-x-2">
+                    <button
+                      type="button"
+                      (click)="updatePerson()"
+                      class="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+                    >
+                      Update
+                    </button>
+                    <button
+                      type="button"
+                      (click)="cancelEdit()"
+                      class="px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 text-sm"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
               </div>
               
               <!-- Add Person Form -->
@@ -298,13 +359,17 @@ export class AddTransactionComponent {
   error = '';
   people: Person[] = [];
   showAddPersonForm = false;
+  showEditPersonForm = false;
+  editingPerson: any = null;
   newPerson: Omit<Person, '_id' | 'userId'> = { name: '', relation: '', mobile: '' };
 
   constructor(
     private fb: FormBuilder,
     private transactionService: TransactionService,
     private peopleService: PeopleService,
-    private router: Router
+    private router: Router,
+    private snackBar: MatSnackBar,
+    private toastService: ToastService
   ) {
     this.transactionForm = this.fb.group({
       type: ['expense', Validators.required],
@@ -335,10 +400,12 @@ export class AddTransactionComponent {
 
       this.transactionService.addTransaction(transaction).subscribe({
         next: () => {
+          this.toastService.show('Transaction added successfully!');
           this.router.navigate(['/dashboard']);
         },
         error: (err) => {
           this.error = err.error?.message || 'Failed to add transaction';
+          this.toastService.show('Failed to add transaction');
           this.loading = false;
         }
       });
@@ -368,6 +435,71 @@ export class AddTransactionComponent {
         }
       });
     }
+  }
+
+  editSelectedPerson(): void {
+    const selectedPersonId = this.transactionForm.get('person')?.value;
+    if (selectedPersonId) {
+      const person = this.people.find(p => p._id === selectedPersonId);
+      if (person) {
+        this.editingPerson = { ...person };
+        this.showEditPersonForm = true;
+        this.showAddPersonForm = false;
+      }
+    }
+  }
+
+  updatePerson(): void {
+    if (!this.editingPerson.name || !this.editingPerson.relation) {
+      this.snackBar.open('Name and relation are required', 'Close', { duration: 3000 });
+      return;
+    }
+
+    const personData = {
+      name: this.editingPerson.name,
+      relation: this.editingPerson.relation,
+      mobile: this.editingPerson.mobile || ''
+    };
+
+    this.peopleService.updatePerson(this.editingPerson._id, personData).subscribe({
+      next: () => {
+        const personIndex = this.people.findIndex(p => p._id === this.editingPerson._id);
+        if (personIndex !== -1) {
+          this.people[personIndex] = { ...this.people[personIndex], ...personData };
+        }
+        this.snackBar.open('Person updated successfully!', 'Close', { duration: 3000 });
+        this.cancelEdit();
+      },
+      error: (err) => {
+        console.error('Error updating person:', err);
+        this.snackBar.open('Failed to update person', 'Close', { duration: 3000 });
+      }
+    });
+  }
+
+  deleteSelectedPerson(): void {
+    const selectedPersonId = this.transactionForm.get('person')?.value;
+    if (selectedPersonId) {
+      const person = this.people.find(p => p._id === selectedPersonId);
+      if (person && confirm(`Are you sure you want to delete ${person.name}?`)) {
+        this.peopleService.deletePerson(selectedPersonId).subscribe({
+          next: () => {
+            this.people = this.people.filter(p => p._id !== selectedPersonId);
+            this.transactionForm.patchValue({ person: '' });
+            this.snackBar.open('Person deleted successfully!', 'Close', { duration: 3000 });
+          },
+          error: (err) => {
+            console.error('Error deleting person:', err);
+            this.snackBar.open('Failed to delete person', 'Close', { duration: 3000 });
+          }
+        });
+      }
+    }
+  }
+
+  cancelEdit(): void {
+    this.editingPerson = null;
+    this.showEditPersonForm = false;
   }
 
   resetNewPerson(): void {

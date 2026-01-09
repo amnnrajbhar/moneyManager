@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { ToastService } from '../services/toast.service';
 
 @Component({
   selector: 'app-salary-setup',
@@ -72,7 +73,8 @@ export class SalarySetupComponent {
 
   constructor(
     private fb: FormBuilder,
-    private router: Router
+    private router: Router,
+    private toastService: ToastService
   ) {
     this.salaryForm = this.fb.group({
       salary: ['', [Validators.required, Validators.min(1000)]]
@@ -88,6 +90,7 @@ export class SalarySetupComponent {
       localStorage.setItem('monthlySalary', salary.toString());
       
       setTimeout(() => {
+        this.toastService.show('Salary setup completed!');
         this.router.navigate(['/dashboard']);
       }, 1000);
     }

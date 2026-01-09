@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../services/auth.service';
+import { ToastService } from '../services/toast.service';
 
 @Component({
   selector: 'app-login',
@@ -131,7 +132,8 @@ export class LoginComponent {
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private toastService: ToastService
   ) {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
@@ -146,12 +148,17 @@ export class LoginComponent {
       
       const { email, password } = this.loginForm.value;
       
+      // Show API waking message for potential delays
+      this.toastService.show('API Service Waking...', 5000);
+      
       this.authService.login(email, password).subscribe({
         next: () => {
+          this.toastService.show('Login successful!');
           this.router.navigate(['/dashboard']);
         },
         error: (err) => {
           this.error = err.error?.message || 'Login failed';
+          this.toastService.show('Login failed');
           this.loading = false;
         }
       });
