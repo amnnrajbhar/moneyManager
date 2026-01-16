@@ -54,10 +54,7 @@ export class PdfExportService {
     };
 
     // Generate PDF
-    html2pdf().set(opt).from(htmlContent).outputPdf('blob').then((blob: Blob) => {
-      const url = URL.createObjectURL(blob);
-      window.open(url, '_blank');
-    });
+    html2pdf().set(opt).from(htmlContent).save();
   }
 
   private generateHTMLContent(transactions: any[], totalIncome: number, totalExpense: number, balance: number, month?: string, startDate?: Date, endDate?: Date): string {
