@@ -12,6 +12,7 @@ import { ToastService } from '../services/toast.service';
 import { ExpensesModalComponent } from './expenses-modal.component';
 import { IncomeModalComponent } from './income-modal.component';
 import { BorrowingModalComponent } from './borrowing-modal.component';
+import { PdfExportModalComponent } from './pdf-export-modal.component';
 
 Chart.register(...registerables);
 
@@ -178,6 +179,15 @@ Chart.register(...registerables);
                 <i class="fas fa-handshake text-xs sm:text-sm"></i>
                 <span>Borrowing</span>
               </button>
+              <button
+                (click)="openPdfExportModal()"
+                [disabled]="transactions.length === 0"
+                class="px-3 sm:px-4 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:shadow-lg transition-all duration-200 flex items-center space-x-1 sm:space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Download PDF Report"
+              >
+                <i class="fas fa-file-pdf text-xs sm:text-sm"></i>
+                <span>PDF</span>
+              </button>
             </div>
           </div>
           <!-- Chart Container - Responsive Height -->
@@ -238,7 +248,7 @@ Chart.register(...registerables);
             <div class="w-12 h-12 sm:w-16 sm:h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
               <i class="fas fa-receipt text-gray-400 text-lg sm:text-2xl"></i>
             </div>
-            <h3 class="text-base sm:text-lg font-medium text-gray-900 mb-2">No transactions yet</h3>
+            <h3 class="text-base sm:text-lg font-medium text-gray-900 mb-2">No Transaction found</h3>
             <p class="text-sm text-gray-500 mb-3 sm:mb-4">Start tracking your income and expenses!</p>
             <button
               routerLink="/add-transaction"
@@ -247,6 +257,13 @@ Chart.register(...registerables);
               Add Your First Transaction
             </button>
           </div>
+        </div>
+
+        <!-- Copyright Footer -->
+        <div class="mt-8 text-center">
+          <p class="text-xs text-gray-500">
+            © 2026 Money Manager | Developed by <a href="https://amnnrajbhar.github.io/info/" target="_blank" class="text-blue-600 hover:text-blue-700 font-medium">Aman Rajbhar</a>
+          </p>
         </div>
       </div>
     </div>
@@ -425,6 +442,18 @@ export class DashboardComponent implements OnInit {
       maxHeight: '85vh',
       panelClass: 'custom-dialog-container',
       position: { top: '50px' }
+    });
+  }
+
+  openPdfExportModal(): void {
+    if (this.transactions.length === 0) {
+      this.toastService.show('No transactions to export');
+      return;
+    }
+    this.dialog.open(PdfExportModalComponent, {
+      width: '95%',
+      maxWidth: '500px',
+      panelClass: 'custom-dialog-container'
     });
   }
 

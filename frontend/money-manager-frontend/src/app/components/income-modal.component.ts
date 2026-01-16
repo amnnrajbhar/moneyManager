@@ -29,8 +29,8 @@ import { Transaction } from '../services/transaction.service';
       </div>
 
       <!-- Content - Responsive Scrollable Area -->
-      <div class="flex-1 overflow-hidden">
-        <div class="h-full overflow-y-auto px-3 sm:px-6 py-3 sm:py-4">
+      <div class="flex-1 overflow-y-auto">
+        <div class="px-3 sm:px-6 py-3 sm:py-4">
           <div class="space-y-2 sm:space-y-3">
             <div *ngFor="let income of paginatedIncome" 
                  class="flex items-center justify-between p-3 sm:p-4 bg-gray-50 rounded-lg sm:rounded-xl hover:bg-gray-100 transition-colors duration-200">
@@ -82,7 +82,7 @@ export class IncomeModalComponent {
   incomes: Transaction[] = [];
   paginatedIncome: Transaction[] = [];
   totalIncome = 0;
-  pageSize = 10;
+  pageSize = 5;
   pageIndex = 0;
 
   constructor(
