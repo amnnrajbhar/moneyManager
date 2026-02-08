@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /add-transaction
+Disallow: /advanced-chart
+Disallow: /portfolio
+
+Sitemap: https://moneymanager-jade.vercel.app/sitemap.xml

@@ -1,17 +1,43 @@
-# 💰 Money Manager - Your Complete Financial Companion
+# 💰 Money Manager - Track Expenses & Manage Personal Finance
 
 <div align="center">
-  <img src="https://img.shields.io/badge/Angular-17-red?style=for-the-badge&logo=angular" alt="Angular 17">
-  <img src="https://img.shields.io/badge/Node.js-Express-green?style=for-the-badge&logo=node.js" alt="Node.js">
-  <img src="https://img.shields.io/badge/MongoDB-Atlas-green?style=for-the-badge&logo=mongodb" alt="MongoDB">
-  <img src="https://img.shields.io/badge/TailwindCSS-3.0-blue?style=for-the-badge&logo=tailwindcss" alt="Tailwind">
-  <img src="https://img.shields.io/badge/Chart.js-Visualizations-orange?style=for-the-badge&logo=chart.js" alt="Chart.js">
+  <img src="https://img.shields.io/badge/Angular-17.3-red?style=for-the-badge&logo=angular" alt="Angular 17.3">
+  <img src="https://img.shields.io/badge/Node.js-18+-green?style=for-the-badge&logo=node.js" alt="Node.js 18+">
+  <img src="https://img.shields.io/badge/MongoDB-8.0-green?style=for-the-badge&logo=mongodb" alt="MongoDB">
+  <img src="https://img.shields.io/badge/TailwindCSS-3.4-blue?style=for-the-badge&logo=tailwindcss" alt="Tailwind">
+  <img src="https://img.shields.io/badge/Chart.js-4.5-orange?style=for-the-badge&logo=chart.js" alt="Chart.js">
 </div>
 
 <div align="center">
-  <h3>🚀 A modern, feature-rich money management application that helps you take control of your finances!</h3>
-  <p><em>Track expenses • Manage income • Build portfolio • Monitor borrowings • Visualize data</em></p>
+  <h3>🚀 The Ultimate Money Manager App & Expense Tracker</h3>
+  <p><em>Track expenses • Manage income • Build portfolio • Monitor budget • Control finances</em></p>
 </div>
+
+---
+
+## 🌐 Live Demo
+
+<div align="center">
+  <h3>✨ Try the Best Expense Tracker & Budget Manager!</h3>
+  <p>
+    <strong><a href="https://moneymanager-jade.vercel.app/">🔗 https://moneymanager-jade.vercel.app/</a></strong>
+  </p>
+  <p><em>Free money manager app to track expenses and manage your personal finance</em></p>
+</div>
+
+---
+
+## 🎯 Why Choose Our Money Manager App?
+
+Take control of your personal finance with the most comprehensive **expense tracker** and **budget tracker** available. Our **money manager app** helps you:
+
+- **Track Expenses** - Monitor every rupee you spend with smart categorization
+- **Manage Money** - Complete budget tracker for income, expenses, and savings
+- **Build Portfolio** - Track investments with real-time profit/loss calculations
+- **Control Budget** - Visualize spending patterns and make informed decisions
+- **Monitor Borrowings** - Keep track of money lent and borrowed
+
+Whether you're looking for an **expense tracker**, **budget tracker**, or complete **personal finance manager**, our app provides everything you need to manage money effectively.
 
 ---
 
@@ -55,21 +81,23 @@
 
 ### **Frontend Powerhouse**
 ```typescript
-🅰️ Angular 17 (Standalone Components)
-🎨 Tailwind CSS (Modern Styling)
-📊 Chart.js + ng2-charts (Data Visualization)
+🅰️ Angular 17.3 (Standalone Components)
+🎨 Tailwind CSS 3.4 (Modern Styling)
+📊 Chart.js 4.5 + ng2-charts (Data Visualization)
 🔧 Reactive Forms (Form Management)
-📱 Angular Material (UI Components)
-🎭 Font Awesome (Icons)
+📱 Angular Material 17.3 (UI Components)
+🎭 Font Awesome 6.5 (Icons)
+📄 html2pdf (PDF Export)
 ```
 
 ### **Backend Excellence**
 ```javascript
-🟢 Node.js + Express (Server)
-🍃 MongoDB + Mongoose (Database)
-🔐 JWT + bcrypt (Authentication)
+🟢 Node.js 18+ + Express 4.18 (Server)
+🍃 MongoDB 8.0 + Mongoose (Database)
+🔐 JWT + bcryptjs (Authentication)
 🛡️ CORS + Security Middleware
 📡 RESTful API Design
+🔧 Nodemon (Development)
 ```
 
 ---
@@ -183,7 +211,18 @@ DELETE /api/transactions/:id # 🗑️ Delete transaction
 
 ### 👥 **People Management**
 ```http
-GET  /api/people     # 👥 Get user's contacts
+GET
+
+### 📊 **Portfolio Management**
+```http
+GET  /api/portfolio     # 📈 Get user's portfolio
+POST /api/portfolio     # ➕ Add portfolio item
+```
+
+### 💰 **User Balance**
+```http
+GET /api/user-balance     # 💳 Get balance summary
+```  /api/people     # 👥 Get user's contacts
 POST /api/people     # ➕ Add new contact
 ```
 

@@ -7,6 +7,7 @@ import { Chart, ChartData, ChartConfiguration, registerables } from 'chart.js';
 import { AddPortfolioModalComponent } from './add-portfolio-modal.component';
 import { PortfolioService, Portfolio } from '../services/portfolio.service';
 import { ToastService } from '../services/toast.service';
+import { SeoService } from '../services/seo.service';
 
 Chart.register(...registerables);
 
@@ -203,10 +204,16 @@ export class PortfolioComponent implements OnInit {
     private router: Router,
     private dialog: MatDialog,
     private portfolioService: PortfolioService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private seoService: SeoService
   ) {}
 
   ngOnInit(): void {
+    this.seoService.updateMetaTags({
+      title: 'Portfolio - Money Manager App',
+      description: 'Track your investment portfolio with real-time profit/loss calculations. Monitor stocks, mutual funds, bonds, and crypto investments in one place.',
+      url: 'https://moneymanager-jade.vercel.app/portfolio'
+    });
     this.loadPortfolio();
   }
 

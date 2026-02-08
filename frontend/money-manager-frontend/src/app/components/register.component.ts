@@ -1,9 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { ToastService } from '../services/toast.service';
+import { SeoService } from '../services/seo.service';
 
 @Component({
   selector: 'app-register',
@@ -124,7 +125,7 @@ import { ToastService } from '../services/toast.service';
     </div>
   `
 })
-export class RegisterComponent {
+export class RegisterComponent implements OnInit {
   registerForm: FormGroup;
   loading = false;
   error = '';
@@ -133,11 +134,20 @@ export class RegisterComponent {
     private fb: FormBuilder,
     private authService: AuthService,
     private router: Router,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private seoService: SeoService
   ) {
     this.registerForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]]
+    });
+  }
+
+  ngOnInit(): void {
+    this.seoService.updateMetaTags({
+      title: 'Register - Money Manager App',
+      description: 'Create your free Money Manager account. Start tracking expenses, managing income, and building your investment portfolio today.',
+      url: 'https://moneymanager-jade.vercel.app/register'
     });
   }
 

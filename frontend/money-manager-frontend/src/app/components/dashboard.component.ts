@@ -9,6 +9,7 @@ import { TransactionService, Transaction } from '../services/transaction.service
 import { PortfolioService } from '../services/portfolio.service';
 import { UserBalanceService } from '../services/user-balance.service';
 import { ToastService } from '../services/toast.service';
+import { SeoService } from '../services/seo.service';
 import { ExpensesModalComponent } from './expenses-modal.component';
 import { IncomeModalComponent } from './income-modal.component';
 import { BorrowingModalComponent } from './borrowing-modal.component';
@@ -22,6 +23,22 @@ Chart.register(...registerables);
   imports: [CommonModule, RouterModule, BaseChartDirective],
   template: `
     <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      <!-- SEO Landing Section (Hidden for authenticated users) -->
+      <section *ngIf="showLandingContent" class="bg-white border-b border-gray-200">
+        <div class="max-w-4xl mx-auto px-4 py-12 text-center">
+          <h1 class="text-4xl font-bold text-gray-900 mb-4">Money Manager - Track Expenses & Manage Personal Finance</h1>
+          <h2 class="text-xl text-gray-700 mb-6">Your Complete Budget Tracker and Expense Management Solution</h2>
+          <p class="text-gray-600 mb-4">
+            Take control of your finances with our powerful money manager app. Track expenses, manage income, 
+            build your investment portfolio, and monitor borrowings all in one place. Our budget tracker helps you 
+            make smarter financial decisions with real-time analytics and beautiful visualizations.
+          </p>
+          <p class="text-gray-600">
+            Start managing your personal finance today with features like expense tracking, income management, 
+            portfolio monitoring, and comprehensive financial reports. Perfect for individuals looking to manage money effectively.
+          </p>
+        </div>
+      </section>
       <!-- Responsive Navigation -->
       <nav class="bg-white/80 backdrop-blur-md shadow-lg border-b border-gray-200/50 sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
@@ -277,6 +294,7 @@ export class DashboardComponent implements OnInit {
   balance = 0;
   totalBalance = 0;
   portfolioValue = 0;
+  showLandingContent = false;
 
   remainingBalance = 0;
   Math = Math;
@@ -319,7 +337,8 @@ export class DashboardComponent implements OnInit {
     private userBalanceService: UserBalanceService,
     private router: Router,
     private dialog: MatDialog,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private seoService: SeoService
   ) { }
 
   editAvailableAmount(): void {
@@ -350,6 +369,11 @@ export class DashboardComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.seoService.updateMetaTags({
+      title: 'Dashboard - Money Manager App',
+      description: 'Manage your finances with our comprehensive dashboard. Track expenses, monitor income, view portfolio performance, and control your budget in real-time.',
+      url: 'https://moneymanager-jade.vercel.app/dashboard'
+    });
     this.loadCustomBalance();
     this.loadTransactions();
   }

@@ -1,9 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { ToastService } from '../services/toast.service';
+import { SeoService } from '../services/seo.service';
 
 @Component({
   selector: 'app-login',
@@ -124,7 +125,7 @@ import { ToastService } from '../services/toast.service';
     </div>
   `
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   loginForm: FormGroup;
   loading = false;
   error = '';
@@ -133,11 +134,20 @@ export class LoginComponent {
     private fb: FormBuilder,
     private authService: AuthService,
     private router: Router,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private seoService: SeoService
   ) {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]]
+    });
+  }
+
+  ngOnInit(): void {
+    this.seoService.updateMetaTags({
+      title: 'Login - Money Manager App',
+      description: 'Sign in to your Money Manager account to track expenses, manage income, and control your personal finances.',
+      url: 'https://moneymanager-jade.vercel.app/login'
     });
   }
 
@@ -148,15 +158,17 @@ export class LoginComponent {
       
       const { email, password } = this.loginForm.value;
       
-      // Show API waking message for potential delays
-      this.toastService.show('API Service Waking...', 5000);
+      // Show API waking message (no auto-hide for cold starts)
+      this.toastService.show('API Service Waking... Please wait', 30000);
       
       this.authService.login(email, password).subscribe({
         next: () => {
+          this.toastService.hide();
           this.toastService.show('Login successful!');
           this.router.navigate(['/dashboard']);
         },
         error: (err) => {
+          this.toastService.hide();
           this.error = err.error?.message || 'Login failed';
           this.toastService.show('Login failed');
           this.loading = false;
