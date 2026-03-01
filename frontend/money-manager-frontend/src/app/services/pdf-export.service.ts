@@ -67,17 +67,28 @@ export class PdfExportService {
     const incomePercent = total > 0 ? (totalIncome / total) * 100 : 50;
     const expensePercent = total > 0 ? (totalExpense / total) * 100 : 50;
 
-    const transactionRows = transactions
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    const sortedTransactions = transactions.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    let runningBalance = 0;
+    
+    const transactionRows = sortedTransactions
       .map((t, index) => {
-        const isBorrowed = this.getTransactionType(t) === 'Borrowing';
+        const transactionType = this.getTransactionType(t);
+        const isIncome = transactionType === 'Income';
+        const isExpense = transactionType === 'Expense';
+        const isBorrowed = transactionType === 'Borrowing';
+        
+        const debit = isExpense ? t.amount : 0;
+        const credit = isIncome ? t.amount : 0;
+        runningBalance += credit - debit;
+        
         const bgColor = isBorrowed ? '#fef9c3' : (index % 2 === 0 ? '#f0f9ff' : '#ffffff');
         return `
         <tr style="background: ${bgColor};">
           <td style="padding: 8px; border: 1px solid #e5e7eb;">${new Date(t.date).toLocaleDateString()}</td>
-          <td style="padding: 8px; border: 1px solid #e5e7eb;">${this.getTransactionType(t)}</td>
           <td style="padding: 8px; border: 1px solid #e5e7eb;">${t.category}</td>
-          <td style="padding: 8px; border: 1px solid #e5e7eb; text-align: right; font-family: 'Courier New', monospace;">₹${this.formatCurrency(t.amount)}</td>
+          <td style="padding: 8px; border: 1px solid #e5e7eb; text-align: right; font-family: 'Courier New', monospace; color: ${debit > 0 ? '#dc2626' : '#666'};">₹${debit > 0 ? this.formatCurrency(debit) : '-'}</td>
+          <td style="padding: 8px; border: 1px solid #e5e7eb; text-align: right; font-family: 'Courier New', monospace; color: ${credit > 0 ? '#16a34a' : '#666'};">₹${credit > 0 ? this.formatCurrency(credit) : '-'}</td>
+          <td style="padding: 8px; border: 1px solid #e5e7eb; text-align: right; font-family: 'Courier New', monospace; font-weight: bold; color: ${runningBalance >= 0 ? '#16a34a' : '#dc2626'};">₹${this.formatCurrency(Math.abs(runningBalance))}</td>
           <td style="padding: 8px; border: 1px solid #e5e7eb;">${t.note || '-'}</td>
         </tr>
       `;
@@ -136,9 +147,10 @@ export class PdfExportService {
             <thead>
               <tr style="background: #fed7aa; color: #92400e;">
                 <th style="padding: 10px; text-align: left; font-weight: bold;">Date</th>
-                <th style="padding: 10px; text-align: left; font-weight: bold;">Type</th>
                 <th style="padding: 10px; text-align: left; font-weight: bold;">Category</th>
-                <th style="padding: 10px; text-align: right; font-weight: bold;">Amount</th>
+                <th style="padding: 10px; text-align: right; font-weight: bold;">Debit</th>
+                <th style="padding: 10px; text-align: right; font-weight: bold;">Credit</th>
+                <th style="padding: 10px; text-align: right; font-weight: bold;">Balance</th>
                 <th style="padding: 10px; text-align: left; font-weight: bold;">Note</th>
               </tr>
             </thead>

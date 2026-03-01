@@ -24,5 +24,10 @@ export const routes: Routes = [
     path: 'portfolio', 
     loadComponent: () => import('./components/portfolio.component').then(m => m.PortfolioComponent),
     canActivate: [authGuard] 
+  },
+  { 
+    path: 'edit-transaction', 
+    loadComponent: () => import('./components/edit-transaction.component').then(m => m.EditTransactionComponent),
+    canActivate: [authGuard] 
   }
 ];

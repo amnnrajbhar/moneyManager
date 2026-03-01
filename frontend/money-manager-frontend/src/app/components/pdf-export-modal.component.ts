@@ -29,6 +29,7 @@ import { ToastService } from '../services/toast.service';
                 type="radio"
                 [(ngModel)]="filterType"
                 value="month"
+                (change)="onFilterTypeChange()"
                 class="sr-only"
               />
               <div class="p-3 border-2 rounded-lg transition-all"
@@ -44,6 +45,7 @@ import { ToastService } from '../services/toast.service';
                 type="radio"
                 [(ngModel)]="filterType"
                 value="range"
+                (change)="onFilterTypeChange()"
                 class="sr-only"
               />
               <div class="p-3 border-2 rounded-lg transition-all"
@@ -63,27 +65,70 @@ import { ToastService } from '../services/toast.service';
           <input
             type="month"
             [(ngModel)]="selectedMonth"
+            (change)="onDateChange()"
             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
           />
         </div>
 
         <!-- Date Range Selection -->
-        <div *ngIf="filterType === 'range'" class="grid grid-cols-2 gap-3">
+        <div *ngIf="filterType === 'range'" class="space-y-3">
+          <!-- Quick Range Buttons -->
           <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">Start Date</label>
-            <input
-              type="date"
-              [(ngModel)]="startDate"
-              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-            />
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Quick Select</label>
+            <div class="grid grid-cols-4 gap-2">
+              <button
+                (click)="setQuickRange('3months')"
+                [class]="rangePreset === '3months' ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+                class="px-3 py-2 text-xs font-medium rounded-lg transition-all"
+              >
+                3 Months
+              </button>
+              <button
+                (click)="setQuickRange('6months')"
+                [class]="rangePreset === '6months' ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+                class="px-3 py-2 text-xs font-medium rounded-lg transition-all"
+              >
+                6 Months
+              </button>
+              <button
+                (click)="setQuickRange('year')"
+                [class]="rangePreset === 'year' ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+                class="px-3 py-2 text-xs font-medium rounded-lg transition-all"
+              >
+                This Year
+              </button>
+              <button
+                (click)="setQuickRange('custom')"
+                [class]="rangePreset === 'custom' ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+                class="px-3 py-2 text-xs font-medium rounded-lg transition-all"
+              >
+                Custom
+              </button>
+            </div>
           </div>
-          <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">End Date</label>
-            <input
-              type="date"
-              [(ngModel)]="endDate"
-              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-            />
+
+          <!-- Date Inputs -->
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Start Date</label>
+              <input
+                type="date"
+                [(ngModel)]="startDate"
+                (change)="onDateChange()"
+                [disabled]="rangePreset !== 'custom'"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-2">End Date</label>
+              <input
+                type="date"
+                [(ngModel)]="endDate"
+                (change)="onDateChange()"
+                [disabled]="rangePreset !== 'custom'"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+              />
+            </div>
           </div>
         </div>
 
@@ -121,6 +166,7 @@ export class PdfExportModalComponent {
   selectedMonth: string = new Date().toISOString().substring(0, 7);
   startDate: string = '';
   endDate: string = '';
+  rangePreset: '3months' | '6months' | 'year' | 'custom' = '3months';
   transactionCount: number | null = null;
   loading = false;
   transactions: any[] = [];
@@ -132,6 +178,43 @@ export class PdfExportModalComponent {
     private toastService: ToastService
   ) {
     this.loadTransactions();
+    this.setQuickRange('3months');
+  }
+
+  onFilterTypeChange(): void {
+    this.updateTransactionCount();
+  }
+
+  onDateChange(): void {
+    if (this.filterType === 'range' && this.startDate && this.endDate) {
+      this.rangePreset = 'custom';
+    }
+    this.updateTransactionCount();
+  }
+
+  setQuickRange(preset: '3months' | '6months' | 'year' | 'custom'): void {
+    this.rangePreset = preset;
+    const today = new Date();
+    const endDate = new Date(today);
+    let startDate = new Date(today);
+
+    switch (preset) {
+      case '3months':
+        startDate.setMonth(today.getMonth() - 3);
+        break;
+      case '6months':
+        startDate.setMonth(today.getMonth() - 6);
+        break;
+      case 'year':
+        startDate = new Date(today.getFullYear(), 0, 1);
+        break;
+      case 'custom':
+        return;
+    }
+
+    this.startDate = startDate.toISOString().split('T')[0];
+    this.endDate = endDate.toISOString().split('T')[0];
+    this.updateTransactionCount();
   }
 
   loadTransactions(): void {

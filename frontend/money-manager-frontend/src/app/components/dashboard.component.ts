@@ -229,12 +229,28 @@ Chart.register(...registerables);
                 Add New
               </button>
             </div>
+            <div class="mt-3 pt-3 border-t border-gray-200/50">
+              <div class="flex items-center justify-between">
+                <span class="text-sm font-medium text-gray-600">Closing Balance</span>
+                <span class="text-lg font-bold" [class]="totalBalance >= 0 ? 'text-green-600' : 'text-red-600'">
+                  <i class="fas fa-indian-rupee-sign mr-1"></i>{{ formatIndianCurrency(totalBalance) }}
+                </span>
+              </div>
+            </div>
           </div>
           
           <!-- Transaction List - Responsive -->
-          <div class="divide-y divide-gray-200/50 max-h-80 sm:max-h-96 overflow-y-auto">
-            <div *ngFor="let transaction of transactions" class="px-4 sm:px-6 py-3 sm:py-4 hover:bg-gray-50/50 transition-colors duration-200">
-              <div class="flex items-center justify-between">
+          <div class="max-h-80 sm:max-h-96 overflow-y-auto">
+            <ng-container *ngFor="let transaction of transactions; let i = index">
+              <div *ngIf="isFirstTransactionOfDay(transaction, i)" class="px-4 sm:px-6 py-2 border-b border-gray-100 bg-gray-50/30">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-medium text-gray-500">{{ transaction.date | date:'MMM dd, yyyy' }} - Closing Balance</span>
+                  <span class="text-xs font-bold" [ngClass]="getClosingBalance(transaction) >= 0 ? 'text-green-600' : 'text-red-600'">
+                    <i class="fas fa-indian-rupee-sign mr-1"></i>{{ formatIndianCurrency(getClosingBalance(transaction)) }}
+                  </span>
+                </div>
+              </div>
+              <div class="px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between hover:bg-gray-50/50 transition-colors duration-200 border-b border-gray-200/50">
                 <div class="flex items-center space-x-3 sm:space-x-4 flex-1 min-w-0">
                   <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0" [class]="(transaction.type === 'income' || (transaction.type === 'Borrowed' && transaction.category === 'Lent Money')) ? 'bg-green-100' : 'bg-red-100'">
                     <i class="fas text-xs sm:text-sm" [class]="(transaction.type === 'income' || (transaction.type === 'Borrowed' && transaction.category === 'Lent Money')) ? 'fa-plus text-green-600' : (transaction.type === 'Borrowed' ? 'fa-handshake text-red-600' : 'fa-minus text-red-600')"></i>
@@ -249,15 +265,23 @@ Chart.register(...registerables);
                   <div class="text-xs sm:text-sm font-bold" [class]="(transaction.type === 'income' || (transaction.type === 'Borrowed' && transaction.category === 'Lent Money')) ? 'text-green-600' : 'text-red-600'">
                     {{ (transaction.type === 'income' || (transaction.type === 'Borrowed' && transaction.category === 'Lent Money')) ? '+' : '-' }}<i class="fas fa-indian-rupee-sign mr-1"></i>{{ formatIndianCurrency(transaction.amount) }}
                   </div>
-                  <button
-                    (click)="deleteTransaction(transaction._id!)"
-                    class="text-xs text-red-500 hover:text-red-700 mt-1 transition-colors duration-200"
-                  >
-                    Delete
-                  </button>
+                  <div class="flex gap-2 mt-1">
+                    <button
+                      (click)="editTransaction(transaction)"
+                      class="text-xs text-blue-500 hover:text-blue-700 transition-colors duration-200"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      (click)="deleteTransaction(transaction._id!)"
+                      class="text-xs text-red-500 hover:text-red-700 transition-colors duration-200"
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
+            </ng-container>
           </div>
           
           <!-- Empty State - Responsive -->
@@ -383,9 +407,34 @@ export class DashboardComponent implements OnInit {
       next: (transactions) => {
         this.transactions = transactions;
         this.calculateTotals();
+        this.calculateRunningBalance();
       },
       error: (err) => console.error('Error loading transactions:', err)
     });
+  }
+
+  calculateRunningBalance(): void {
+    const dayBalanceMap = new Map<string, number>();
+    let runningBalance = this.totalBalance;
+    
+    for (let i = 0; i < this.transactions.length; i++) {
+      const dateKey = new Date(this.transactions[i].date).toDateString();
+      
+      if (!dayBalanceMap.has(dateKey)) {
+        let dayEndBalance = runningBalance;
+        for (let j = i; j < this.transactions.length; j++) {
+          const txDate = new Date(this.transactions[j].date).toDateString();
+          if (txDate !== dateKey) break;
+          
+          const isIncome = this.transactions[j].type === 'income' || 
+            (this.transactions[j].type === 'Borrowed' && this.transactions[j].category === 'Lent Money');
+          dayEndBalance -= isIncome ? this.transactions[j].amount : -this.transactions[j].amount;
+        }
+        dayBalanceMap.set(dateKey, dayEndBalance);
+      }
+      
+      (this.transactions[i] as any).closingBalance = dayBalanceMap.get(dateKey);
+    }
   }
 
   calculateTotals(): void {
@@ -431,6 +480,12 @@ export class DashboardComponent implements OnInit {
         }
       });
     }
+  }
+
+  editTransaction(transaction: Transaction): void {
+    this.router.navigate(['/edit-transaction'], {
+      state: { transaction }
+    });
   }
 
   openExpensesModal(): void {
@@ -483,6 +538,17 @@ export class DashboardComponent implements OnInit {
 
   formatIndianCurrency(amount: number): string {
     return new Intl.NumberFormat('en-IN').format(amount);
+  }
+
+  getClosingBalance(transaction: Transaction): number {
+    return (transaction as any).closingBalance || 0;
+  }
+
+  isFirstTransactionOfDay(transaction: Transaction, index: number): boolean {
+    if (index === 0) return true;
+    const currentDate = new Date(transaction.date).toDateString();
+    const prevDate = new Date(this.transactions[index - 1].date).toDateString();
+    return currentDate !== prevDate;
   }
 
   loadPortfolioValue(): void {

@@ -38,6 +38,25 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
+// Update transaction
+router.put('/:id', auth, async (req, res) => {
+  try {
+    const transaction = await Transaction.findOneAndUpdate(
+      { _id: req.params.id, userId: req.user._id },
+      req.body,
+      { new: true }
+    );
+    
+    if (!transaction) {
+      return res.status(404).json({ message: 'Transaction not found' });
+    }
+    
+    res.json(transaction);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // Delete transaction
 router.delete('/:id', auth, async (req, res) => {
   try {
